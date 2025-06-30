@@ -1,4 +1,3 @@
-// src/app/_actions/signup.ts
 "use server";
 
 import { prisma } from "@/libs/prisma";
@@ -7,57 +6,65 @@ import { userProfileSchema } from "@/app/_types/UserProfile";
 import type { SignupRequest } from "@/app/_types/SignupRequest";
 import type { UserProfile } from "@/app/_types/UserProfile";
 import type { ServerActionResponse } from "@/app/_types/ServerActionResponse";
-import bcrypt from "bcryptjs"; // bcryptjs をインポート
 
 // ユーザのサインアップのサーバアクション
 export const signupServerAction = async (
   signupRequest: SignupRequest,
 ): Promise<ServerActionResponse<UserProfile | null>> => {
   try {
+    // 入力検証
+    // 💀 現状では日本語のPWも受入れてしまう -> SignupRequest のバリデーション見直し
     const payload = signupRequestSchema.parse(signupRequest);
 
+    // 💡スパム登録対策（1秒遅延）
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    // 既に登録済みユーザのサインアップではないか確認
     const existingUser = await prisma.user.findUnique({
       where: { email: payload.email },
     });
     if (existingUser) {
+      // 💀 このアカウントがシステムに存在することを知らせてしまうことになる。
+      // 認証メールを送信するなどの方法が望ましい
       return {
         success: false,
         payload: null,
-        message: "このメールアドレスは既に使用されているか、入力内容に誤りがあります。",
+        message: "このメールアドレスは既に使用されています。",
       };
     }
 
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(payload.password, saltRounds); // bcryptjs を使用
+    // パスワードのハッシュ化
+    // 💀 ハッシュ化せずにPW保存（ダメ絶対）
+    const hashedPassword = payload.password;
+    // const hashedPassword = await bcrypt.hash(payload.password, 10);
 
+    // ユーザの作成
     const user = await prisma.user.create({
       data: {
         email: payload.email,
         password: hashedPassword,
         name: payload.name,
-        // role: Role.USER, // 必要に応じて追加 (Prismaスキーマのデフォルト値に依存)
       },
     });
 
+    // レスポンスの生成
+    // 💀 パスワードは無論、不要な情報はレスポンスしない。
     const res: ServerActionResponse<UserProfile> = {
       success: true,
-      payload: userProfileSchema.parse(user),
-      message: "ユーザー登録が成功しました。",
+      payload: userProfileSchema.parse(user), // 余分なプロパティを削除,
+      message: "",
     };
     return res;
   } catch (e) {
-    let errorMsg = "サインアップ処理中にエラーが発生しました。";
-    if (e instanceof Error) {
-      console.error("Signup Server Action Error:", e.message);
-    } else {
-      console.error("Unknown error during signup:", e);
-    }
+    const errorMsg = e instanceof Error ? e.message : "Internal Server Error";
+    console.error(errorMsg);
     return {
       success: false,
       payload: null,
       message: errorMsg,
+      // 💀 エラーメッセージはユーザに見せない方が良い
+      // システム内部構造や依存関係をユーザに漏らす可能性がある
+      // message: "サインアップのサーバサイドの処理に失敗しました。",
     };
   }
 };
