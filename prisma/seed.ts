@@ -1,8 +1,7 @@
-// prisma/seed.ts
 import { v4 as uuid } from "uuid";
 import { PrismaClient, Role, Region } from "@prisma/client";
 import { UserSeed, userSeedSchema } from "../src/app/_types/UserSeed";
-import bcrypt from "bcryptjs"; // bcryptjs をインポート
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -10,7 +9,6 @@ async function main() {
   console.log("Seeding database...");
 
   const userSeeds: UserSeed[] = [
-    // ... (ユーザーデータの定義は変更なし) ...
     {
       name: "高負荷 耐子",
       password: "password1111",
@@ -41,7 +39,6 @@ async function main() {
     },
   ];
 
-  // ... (バリデーション処理は変更なし) ...
   try {
     await Promise.all(
       userSeeds.map(async (userSeed, index) => {
@@ -65,8 +62,6 @@ async function main() {
     throw error;
   }
 
-
-  // 各テーブルの全レコードを削除 (順序に注意)
   await prisma.session.deleteMany();
   await prisma.cartItem.deleteMany();
   await prisma.stolenContent.deleteMany();
@@ -76,16 +71,15 @@ async function main() {
   await prisma.product.deleteMany();
   await prisma.newsItem.deleteMany();
 
-  const saltRounds = 10; // bcryptjsのハッシュ化コスト
+  const saltRounds = 10;
 
-  // ユーザ（user）テーブルにテストデータを挿入 (パスワードをbcryptjsでハッシュ化)
   const usersToCreate = await Promise.all(
     userSeeds.map(async (userSeed) => {
-      const hashedPassword = await bcrypt.hash(userSeed.password, saltRounds); // bcryptjs を使用
+      const hashedPassword = await bcrypt.hash(userSeed.password, saltRounds);
       return {
         id: uuid(),
         name: userSeed.name,
-        password: hashedPassword, // ハッシュ化されたパスワード
+        password: hashedPassword,
         role: userSeed.role,
         email: userSeed.email,
         aboutSlug: userSeed.aboutSlug || null,
@@ -98,8 +92,6 @@ async function main() {
     data: usersToCreate,
   });
 
-  // ... (商品データ、ニュースデータの挿入は変更なし) ...
-  // 商品（product）テーブルにテストデータを挿入
   await prisma.product.createMany({
     data: [
       { id: "A-001", name: "副業で人生逆転！AI自動コード生成マニュアル", price: 10000, },
@@ -109,7 +101,6 @@ async function main() {
     ],
   });
 
-  // NewsItemテーブルにダミーデータを挿入
   await prisma.newsItem.createMany({
     data: [
       { title: "生成AIがバグって「知らんがな」しか返さん事件", region: Region.OSAKA, publishedAt: new Date("2025-05-17"), },
