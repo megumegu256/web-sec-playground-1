@@ -23,6 +23,7 @@ async function main() {
       email: "admin02@example.com",
       role: Role.ADMIN,
     },
+    /*
     {
       name: "構文 誤次郎",
       password: "password1111",
@@ -39,6 +40,7 @@ async function main() {
       aboutSlug: "aimaiko",
       aboutContent: "仕様曖昧子と申します。仲良くしてください。",
     },
+    */
   ];
 
   // userSeedSchema を使って UserSeeds のバリデーション
