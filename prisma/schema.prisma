@@ -1,12 +1,6 @@
-// 更新後は
-// npx prisma db push
-// npx prisma generate
-// ( >Developer: Reload Window ) 
-// npx prisma db seed
-// https://supabase.com/dashboard/project/bodqloucedxxzyncfrab
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// DBの確認は
-// npx prisma studio
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,11 +10,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ユーザーの役割
 enum Role {
   ADMIN
   USER
 }
 
+// 地域
 enum Region {
   TOKYO
   OSAKA
@@ -28,83 +24,85 @@ enum Region {
 }
 
 model User {
-  id           String      @id @default(uuid())
-  email        String      @unique
-  password     String
-  name         String
-  role         Role        @default(USER)
-  aboutSlug    String?     @map("about_slug") @unique
-  aboutContent String      @default("") 
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  lastLoginAt  DateTime? @map("last_login_at")
-
-  sessions     Session[]
-
-  failedLoginAttempts Int      @default(0)
-  isLocked            Boolean  @default(false)
-  lockedAt            DateTime?
-
-  loginHistories LoginHistory[]
-
-  @@map("users")
+  id                    String   @id @default(uuid())
+  email                 String   @unique
+  password              String
+  name                  String?
+  role                  Role     @default(USER)
+  aboutSlug             String?  @unique
+  aboutContent          String   @default("")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // セッション情報とのリレーション
+  sessions              Session[]
+  
+  // アカウントロック機能用のフィールド
+  failedLoginAttempts   Int      @default(0)
+  isLocked              Boolean  @default(false)
+  lockedAt              DateTime?
+  
+  // ログイン履歴とのリレーション
+  loginHistories        LoginHistory[]
 }
+
+// ログイン履歴を保存するモデル
+model LoginHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String
+  userAgent String
+  loginAt   DateTime @default(now())
+}
+
 
 model Session {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now()) @map("created_at")
-  expiresAt  DateTime @map("expires_at")
-
-  @@map("sessions")
-}
-
-model StolenContent {
-  id          String   @id @default(uuid())
-  content     String
-  createdAt   DateTime  @default(now()) @map("created_at")
-  @@map("stolen_contents")
-}
-
-model NewsItem {
-  id          String   @id @default(uuid())
-  title       String
-  content     String   @default("")
-  region      Region
-  publishedAt DateTime @default(now()) @map("published_at")
-
-  @@map("news")
-  @@index([region])
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Product {
-  id          String   @id
+  id          String     @id @default(uuid())
   name        String
   price       Int
-  CartItem    CartItem[]  
-  @@map("products")
+  cartItems   CartItem[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
-model CartSession{
-  id         String   @id @default(uuid())
-  expiresAt  DateTime @map("expires_at")
-  CartItem   CartItem[]
-
-  @@index([expiresAt]) // 有効期限切れの高速検索用
-  @@map("cart_sessions")
+model CartSession {
+  id        String     @id @default(uuid())
+  cartItems CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model CartItem {
-  id            String @id @default(uuid())
-  cartSessionId String @map("cart_session_id")
-  productId     String @map("product_id")
+  id            String      @id @default(uuid())
+  productId     String
   quantity      Int
+  cartSessionId String
+  product       Product     @relation(fields: [productId], references: [id])
+  cartSession   CartSession @relation(fields: [cartSessionId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
 
-  CartSession   CartSession @relation(fields: [cartSessionId], references: [id], onDelete: Cascade)
-  Product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@index([cartSessionId])
-  @@unique([cartSessionId, productId])
-  @@map("cart_items")
+model NewsItem {
+  id          Int      @id @default(autoincrement())
+  title       String
+  region      Region
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StolenContent {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
 }
