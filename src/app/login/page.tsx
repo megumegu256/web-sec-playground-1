@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginRequest, loginRequestSchema } from "@/app/_types/LoginRequest";
 import { UserProfile, userProfileSchema } from "../_types/UserProfile";
@@ -27,91 +27,89 @@ const Page: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoginCompleted, setIsLoginCompleted] = useState(false);
 
-  // フォーム処理関連の準備と設定
   const formMethods = useForm<LoginRequest>({
     mode: "onChange",
     resolver: zodResolver(loginRequestSchema),
   });
-  const fieldErrors = formMethods.formState.errors;
+  const {
+    formState: { errors: fieldErrors },
+    setError,
+    clearErrors,
+    watch,
+    handleSubmit,
+    setValue,
+  } = formMethods;
 
-  // ルートエラー（サーバサイドで発生した認証エラー）の表示設定の関数
   const setRootError = (errorMsg: string) => {
-    formMethods.setError("root", {
-      type: "manual",
-      message: errorMsg,
-    });
+    setError("root", { type: "manual", message: errorMsg });
   };
 
-  // 初期設定
   useEffect(() => {
-    // クエリパラメータからメールアドレスの初期値をセット
     const searchParams = new URLSearchParams(window.location.search);
     const email = searchParams.get(c_Email);
-    formMethods.setValue(c_Email, email || "");
-  }, [formMethods]);
+    setValue(c_Email, email || "");
+  }, [setValue]);
 
-  // ルートエラーメッセージのクリアに関する設定
   useEffect(() => {
-    const subscription = formMethods.watch((value, { name }) => {
+    const subscription = watch((value, { name }) => {
       if (name === c_Email || name === c_Password) {
-        formMethods.clearErrors("root");
+        clearErrors("root");
       }
     });
     return () => subscription.unsubscribe();
-  }, [formMethods]);
+  }, [watch, clearErrors]);
 
-  // ログイン完了後のリダイレクト処理
   useEffect(() => {
     if (isLoginCompleted) {
-      // window.location.href = "/";
       router.replace("/");
       router.refresh();
     }
   }, [isLoginCompleted, router]);
 
-  // フォームの送信処理
-  const onSubmit = async (formValues: LoginRequest) => {
-    const ep = "/api/login";
+  // --- ▼▼▼ 修正箇所 ▼▼▼ ---
+  const onSubmit: SubmitHandler<LoginRequest> = async (formValues) => {
+    setIsPending(true);
+    setRootError(""); // 古いエラーをクリア
 
-    console.log(JSON.stringify(formValues));
     try {
-      setIsPending(true);
-      setRootError("");
-
-      const res = await fetch(ep, {
+      const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formValues),
-        credentials: "same-origin",
-        cache: "no-store",
       });
-      setIsPending(false);
 
-      if (!res.ok) return;
+      // ステータスコードに関わらず、レスポンスボディをJSONとして解析
+      const result: ApiResponse<any> = await response.json();
 
-      const body = (await res.json()) as ApiResponse<unknown>;
-      if (!body.success) {
-        setRootError(body.message);
-        return;
+      // レスポンスがNG、またはボディのsuccessフラグがfalseの場合
+      if (!response.ok || !result.success) {
+        // APIから返されたエラーメッセージをフォームのエラーとして設定
+        setRootError(result.message || "ログインに失敗しました。");
+        return; // 処理を中断
       }
 
+      // --- ログイン成功時の処理 (元のロジックを維持) ---
       if (AUTH.isSession) {
-        // ■■ セッションベース認証の処理 ■■
-        setUserProfile(userProfileSchema.parse(body.payload));
+        setUserProfile(userProfileSchema.parse(result.payload));
       } else {
-        // ■■ トークンベース認証の処理 ■■
-        const jwt = body.payload as string;
-        localStorage.setItem("jwt", jwt); // JWT をローカルストレージに保存
+        const jwt = result.payload as string;
+        localStorage.setItem("jwt", jwt);
         setUserProfile(userProfileSchema.parse(decodeJwt(jwt)));
       }
-      mutate("/api/auth", body);
+      // SWRのキャッシュを更新して、他のコンポーネントの認証状態を更新
+      mutate("/api/auth", result, false);
       setIsLoginCompleted(true);
+
     } catch (e) {
       const errorMsg =
         e instanceof Error ? e.message : "予期せぬエラーが発生しました。";
       setRootError(errorMsg);
+    } finally {
+      // 成功・失敗に関わらず、ローディング状態を解除
+      setIsPending(false);
     }
   };
+  // --- ▲▲▲ 修正箇所 ▲▲▲ ---
 
   return (
     <main>
@@ -121,7 +119,7 @@ const Page: React.FC = () => {
       </div>
       <form
         noValidate
-        onSubmit={formMethods.handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit)}
         className={twMerge(
           "mt-4 flex flex-col gap-y-4",
           isLoginCompleted && "cursor-not-allowed opacity-50",
@@ -154,7 +152,7 @@ const Page: React.FC = () => {
             type="password"
             disabled={isPending || isLoginCompleted}
             error={!!fieldErrors.password}
-            autoComplete="off"
+            autoComplete="current-password"
           />
           <ErrorMsgField msg={fieldErrors.password?.message} />
           <ErrorMsgField msg={fieldErrors.root?.message} />

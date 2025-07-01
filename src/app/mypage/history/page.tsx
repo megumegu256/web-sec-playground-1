@@ -1,10 +1,8 @@
-// src/app/mypage/history/page.tsx
-
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getLoginHistoryAction } from '@/app/_actions/getLoginHistory';
 import type { LoginHistory } from '@prisma/client';
+import type { ApiResponse } from '@/app/_types/ApiResponse';
 
 export default function LoginHistoryPage() {
   const [histories, setHistories] = useState<LoginHistory[]>([]);
@@ -14,14 +12,16 @@ export default function LoginHistoryPage() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const res = await getLoginHistoryAction();
-        if (res.success && res.payload) {
-          setHistories(res.payload);
+        const response = await fetch('/api/mypage/history');
+        const result: ApiResponse<LoginHistory[]> = await response.json();
+
+        if (response.ok && result.success) {
+          setHistories(result.payload || []);
         } else {
-          setError(res.message);
+          setError(result.message || '履歴の取得に失敗しました。');
         }
       } catch (err) {
-        setError('履歴の取得に失敗しました。');
+        setError('ネットワークエラーが発生しました。');
       } finally {
         setLoading(false);
       }
@@ -31,43 +31,55 @@ export default function LoginHistoryPage() {
   }, []);
 
   if (loading) {
-    return <div>読み込み中...</div>;
+    return (
+      <div className="p-4 md:p-8">
+        <h1 className="text-2xl font-bold mb-4">ログイン履歴</h1>
+        <p>読み込み中...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div style={{ color: 'red' }}>エラー: {error}</div>;
+    return (
+      <div className="p-4 md:p-8">
+        <h1 className="text-2xl font-bold mb-4">ログイン履歴</h1>
+        <p className="text-red-500">エラー: {error}</p>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <h1>ログイン履歴</h1>
+    <div className="p-4 md:p-8">
+      <h1 className="text-2xl font-bold mb-6">ログイン履歴</h1>
       {histories.length === 0 ? (
         <p>ログイン履歴はありません。</p>
       ) : (
-        <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-          <thead>
-            <tr>
-              <th style={{ border: '1px solid black', padding: '8px' }}>ログイン日時</th>
-              <th style={{ border: '1px solid black', padding: '8px' }}>IPアドレス</th>
-              <th style={{ border: '1px solid black', padding: '8px' }}>デバイス情報</th>
-            </tr>
-          </thead>
-          <tbody>
-            {histories.map((history) => (
-              <tr key={history.id}>
-                <td style={{ border: '1px solid black', padding: '8px' }}>
-                  {new Date(history.loginAt).toLocaleString('ja-JP')}
-                </td>
-                <td style={{ border: '1px solid black', padding: '8px' }}>
-                  {history.ipAddress}
-                </td>
-                <td style={{ border: '1px solid black', padding: '8px' }}>
-                  {history.userAgent}
-                </td>
+        <div className="overflow-x-auto shadow-md rounded-lg">
+          <table className="min-w-full bg-white border border-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="py-3 px-4 border-b text-left text-sm font-semibold text-gray-600">ログイン日時</th>
+                <th className="py-3 px-4 border-b text-left text-sm font-semibold text-gray-600">IPアドレス</th>
+                <th className="py-3 px-4 border-b text-left text-sm font-semibold text-gray-600">デバイス情報</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {histories.map((history) => (
+                <tr key={history.id} className="hover:bg-gray-50">
+                  <td className="py-3 px-4 whitespace-nowrap">
+                    {new Date(history.loginAt).toLocaleString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </td>
+                  <td className="py-3 px-4 font-mono text-sm">
+                    {history.ipAddress}
+                  </td>
+                  <td className="py-3 px-4 text-xs text-gray-500">
+                    {history.userAgent}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
