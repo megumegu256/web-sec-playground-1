@@ -3,6 +3,7 @@
 import { v4 as uuid } from "uuid";
 import { PrismaClient, Role, Region } from "@prisma/client";
 import { UserSeed, userSeedSchema } from "../src/app/_types/UserSeed";
+import bcrypt from "bcrypt"; // bcryptをインポート
 
 const prisma = new PrismaClient();
 
@@ -72,18 +73,33 @@ async function main() {
   await prisma.product.deleteMany();
   await prisma.cartItem.deleteMany();
 
+  // --- ▼▼▼ ここからが修正箇所 ▼▼▼ ---
+
+  // パスワードをハッシュ化する
+  const hashedUserSeeds = await Promise.all(
+    userSeeds.map(async (userSeed) => {
+      const hashedPassword = await bcrypt.hash(userSeed.password, 10); // 10はコストファクター
+      return {
+        ...userSeed,
+        password: hashedPassword,
+      };
+    })
+  );
+
   // ユーザ（user）テーブルにテストデータを挿入
   await prisma.user.createMany({
-    data: userSeeds.map((userSeed) => ({
+    data: hashedUserSeeds.map((userSeed) => ({
       id: uuid(),
       name: userSeed.name,
-      password: userSeed.password,
+      password: userSeed.password, // ハッシュ化されたパスワードを保存
       role: userSeed.role,
       email: userSeed.email,
       aboutSlug: userSeed.aboutSlug || null,
       aboutContent: userSeed.aboutContent || "",
     })),
   });
+
+  // --- ▲▲▲ ここまでが修正箇所 ▲▲▲ ---
 
   // 商品（product）テーブルにテストデータを挿入
   await prisma.product.createMany({
@@ -105,7 +121,7 @@ async function main() {
       },
       {
         id: "A-004",
-        name: "	パワポで月収100万：架空案件で学ぶ「営業芸」完全読本",
+        name: " パワポで月収100万：架空案件で学ぶ「営業芸」完全読本",
         price: 15000,
       },
     ],

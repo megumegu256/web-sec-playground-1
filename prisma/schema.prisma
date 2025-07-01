@@ -41,6 +41,12 @@ model User {
 
   sessions     Session[]
 
+  failedLoginAttempts Int      @default(0)
+  isLocked            Boolean  @default(false)
+  lockedAt            DateTime?
+
+  loginHistories LoginHistory[]
+
   @@map("users")
 }
 

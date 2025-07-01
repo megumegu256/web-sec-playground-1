@@ -8,7 +8,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { createSession } from "@/app/api/_helper/createSession";
 import { createJwt } from "@/app/api/_helper/createJwt";
 import { AUTH } from "@/config/auth";
-import bcrypt from "bcryptjs"; // bcryptjs をインポート
+import bcrypt from "bcrypt"; // "bcryptjs" から "bcrypt" に変更
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -42,7 +42,8 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json(res, { status: 401 });
     }
 
-    const isValidPassword = await bcrypt.compare( // bcryptjs を使用
+    // "bcrypt" を使ってパスワードを比較
+    const isValidPassword = await bcrypt.compare(
       loginRequest.password,
       user.password,
     );
