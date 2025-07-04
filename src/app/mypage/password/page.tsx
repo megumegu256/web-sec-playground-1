@@ -1,14 +1,9 @@
 'use client';
 
-// このページが動的にレンダリングされることをNext.jsに伝えます。
-// これが今回の問題の正しい解決策です。
-export const dynamic = 'force-dynamic';
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { changePasswordRequestSchema, type ChangePasswordRequest } from '@/app/_types/ChangePasswordRequest';
-import { changePasswordAction } from '@/app/_actions/changePassword';
 import { TextInputField } from '@/app/_components/TextInputField';
 import { Button } from '@/app/_components/Button';
 import { ErrorMsgField } from '@/app/_components/ErrorMsgField';
@@ -33,15 +28,26 @@ export default function PasswordChangePage() {
     setIsSubmitting(true);
 
     try {
-      const res = await changePasswordAction(data);
-      if (!res.success) {
-        setServerError(res.message || 'パスワードの変更に失敗しました。');
+      const response = await fetch('/api/mypage/password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // このリクエストにCookieを含めるようにブラウザに指示します
+        credentials: 'same-origin',
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setServerError(result.message || 'パスワードの変更に失敗しました。');
       } else {
-        setSuccessMessage('パスワードが正常に変更されました。');
+        setSuccessMessage(result.message);
         reset();
       }
     } catch (e) {
-      setServerError('予期せぬエラーが発生しました。');
+      setServerError('ネットワークエラーが発生しました。');
     } finally {
       setIsSubmitting(false);
     }
@@ -68,7 +74,6 @@ export default function PasswordChangePage() {
             error={errors.currentPassword?.message}
             autoComplete="current-password"
           />
-
           <TextInputField
             label="新しいパスワード"
             type="password"
@@ -78,7 +83,6 @@ export default function PasswordChangePage() {
             error={errors.newPassword?.message}
             autoComplete="new-password"
           />
-
           <TextInputField
             label="新しいパスワード（確認用）"
             type="password"
@@ -88,9 +92,7 @@ export default function PasswordChangePage() {
             error={errors.confirmPassword?.message}
             autoComplete="new-password"
           />
-          
           <ErrorMsgField message={serverError} />
-          
           <div className="pt-2">
             <Button type="submit" disabled={isSubmitting} className="w-full">
               {isSubmitting ? '処理中...' : 'パスワードを変更する'}
