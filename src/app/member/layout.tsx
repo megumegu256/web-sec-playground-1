@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useAuth } from "@/app/_hooks/useAuth";
-import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { faSpinner, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import NextLink from "next/link";
 
@@ -12,11 +12,23 @@ interface Props {
 
 const Layout: React.FC<Props> = (props) => {
   const { children } = props;
-  const { userProfile } = useAuth();
+  // useAuthフックからisLoadingも受け取る
+  const { userProfile, isLoading } = useAuth();
 
-  if (!userProfile)
+  // 認証状態を確認中の表示
+  if (isLoading) {
     return (
-      <main>
+      <main className="p-8 text-center">
+        <FontAwesomeIcon icon={faSpinner} spin size="2x" className="text-gray-500" />
+        <p className="mt-3 text-gray-600">認証情報を確認中...</p>
+      </main>
+    );
+  }
+
+  // 確認が終わった後、未ログインの場合の表示
+  if (!userProfile) {
+    return (
+      <main className="p-8 text-center">
         <div className="text-2xl font-bold">
           <FontAwesomeIcon icon={faTriangleExclamation} className="mr-1.5" />
           ログインが必要なコンテンツ
@@ -33,8 +45,9 @@ const Layout: React.FC<Props> = (props) => {
         </div>
       </main>
     );
+  }
 
-  // 認可がない場合は何も表示しない
+  // ログイン済みの場合は、ページの中身を表示
   return <>{children}</>;
 };
 

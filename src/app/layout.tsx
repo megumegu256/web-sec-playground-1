@@ -9,17 +9,21 @@ config.autoAddCss = false;
 
 export const metadata: Metadata = {
   title: "WebSecPlayground",
-  description: "...",
+  description: "A playground for web security learning.",
 };
 
 type Props = {
   children: React.ReactNode;
 };
 
-const RootLayout: React.FC<Props> = async (props) => {
+/**
+ * すべてのページに適用されるルートレイアウト
+ */
+const RootLayout: React.FC<Props> = (props) => {
   return (
     <html lang="ja">
       <body>
+        {/* AuthProviderでアプリケーション全体をラップし、認証情報を共有する */}
         <AuthProvider>
           <Header />
           <main className="mx-4 mt-2 max-w-3xl md:mx-auto">

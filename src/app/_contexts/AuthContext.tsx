@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, createContext } from "react";
+import React, { createContext } from "react";
 import type { UserProfile } from "@/app/_types/UserProfile";
-import useSWR, { mutate } from "swr";
+import useSWR, { mutate } from "swr"; // mutate をインポート
 import type { ApiResponse } from "../_types/ApiResponse";
 import { jwtFetcher } from "./jwtFetcher";
 import { sessionFetcher } from "./sessionFetcher";
 import { AUTH } from "@/config/auth";
 
+// Contextが提供する値の型を定義
 interface AuthContextProps {
   userProfile: UserProfile | null;
+  isLoading: boolean; // 読み込み状態を追加
   logout: () => Promise<boolean>;
 }
 
@@ -22,41 +24,30 @@ interface Props {
 }
 
 const AuthProvider: React.FC<Props> = ({ children }) => {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const { data: session } = useSWR<ApiResponse<UserProfile | null>>(
+  // useSWRからisLoadingも取得する
+  const { data: session, isLoading } = useSWR<ApiResponse<UserProfile | null>>(
     "/api/auth",
     AUTH.isSession ? sessionFetcher : jwtFetcher,
+    { revalidateOnFocus: false } // オプション：フォーカス時の自動再検証を無効化
   );
 
-  useEffect(() => {
-    if (session && session.success) {
-      setUserProfile(session.payload);
-      return;
-    }
-    setUserProfile(null);
-  }, [session]);
+  // ログインしているユーザーの情報を決定（useState/useEffectを廃止し、よりシンプルで安全に）
+  const userProfile = session?.success ? session.payload : null;
 
   const logout = async () => {
     if (AUTH.isSession) {
-      // ■■ セッションベース認証 ■■
-      // → バックエンドにログアウトリクエストを送信してセッションを破棄
-      await fetch("/api/logout", {
-        method: "DELETE",
-        credentials: "same-origin",
-      });
+      await fetch("/api/logout", { method: "DELETE" });
     } else {
-      // ■■ トークンベース認証 ■■
-      // ローカルストレージから jwt を削除
       localStorage.removeItem("jwt");
     }
-    // SWR キャッシュを無効化
-    mutate(() => true, undefined, { revalidate: false });
-    setUserProfile(null);
+    // SWR キャッシュを無効化 (既存のコードに合わせてグローバルmutateを使用)
+    mutate("/api/auth", undefined, { revalidate: false });
     return true;
   };
 
+  // isLoadingも含めてContextに提供
   return (
-    <AuthContext.Provider value={{ userProfile, logout }}>
+    <AuthContext.Provider value={{ userProfile, isLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,5 +1,9 @@
 'use client';
 
+// このページが動的にレンダリングされることをNext.jsに伝えます。
+// これが今回の問題の正しい解決策です。
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,8 +14,6 @@ import { Button } from '@/app/_components/Button';
 import { ErrorMsgField } from '@/app/_components/ErrorMsgField';
 
 export default function PasswordChangePage() {
-  // 認証チェックはレイアウトに任せるため、このページからは削除。
-
   const [serverError, setServerError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
