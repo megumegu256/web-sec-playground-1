@@ -18,7 +18,7 @@ export default function PasswordChangePage() {
     register,
     handleSubmit,
     formState: { errors },
-    reset, // フォームをリセットする関数
+    reset,
   } = useForm<ChangePasswordRequest>({
     resolver: zodResolver(changePasswordRequestSchema),
   });
@@ -32,7 +32,6 @@ export default function PasswordChangePage() {
       const response = await fetch('/api/mypage/password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // 認証Cookieをリクエストに含めるための重要な設定
         credentials: 'same-origin',
         body: JSON.stringify(data),
       });
@@ -43,7 +42,7 @@ export default function PasswordChangePage() {
         setServerError(result.message || 'パスワードの変更に失敗しました。');
       } else {
         setSuccessMessage(result.message);
-        reset(); // 成功したらフォームをリセット
+        reset();
       }
     } catch (e) {
       setServerError('ネットワークエラーが発生しました。');
