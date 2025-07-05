@@ -26,7 +26,6 @@ export default function PasswordChangePage() {
     resolver: zodResolver(changePasswordRequestSchema),
   });
 
-  // ▼▼▼ ここに処理を追記して修正 ▼▼▼
   const onSubmit = async (data: ChangePasswordRequest) => {
     setIsSubmitting(true);
     setServerError('');
@@ -58,11 +57,11 @@ export default function PasswordChangePage() {
   };
 
   return (
-    <div className="max-w-lg mx-auto">
-      <div className="p-8 space-y-6 bg-white rounded-lg shadow-md">
+    <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md p-8 space-y-6 bg-card text-card-foreground rounded-lg shadow-md border border-border">
         <h1 className="text-2xl font-bold text-center">パスワードの変更</h1>
         {successMessage && (
-          <div className="p-3 text-sm text-center text-green-800 bg-green-100 border border-green-400 rounded-md">
+          <div className="p-3 text-sm text-center text-green-700 bg-green-100 border border-green-400 rounded-md">
             {successMessage}
           </div>
         )}
@@ -98,9 +97,9 @@ export default function PasswordChangePage() {
               type="checkbox"
               checked={showPasswords}
               onChange={(e) => setShowPasswords(e.target.checked)}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 rounded border-input bg-card text-primary focus:ring-ring"
             />
-            <label htmlFor="show-passwords" className="ml-2 text-sm font-medium text-gray-900">
+            <label htmlFor="show-passwords" className="ml-2 block text-sm">
               パスワードを表示する
             </label>
           </div>

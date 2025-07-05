@@ -1,11 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-// LoginHistoryの型をインポート
 import type { LoginHistory } from '@prisma/client';
 
-// APIレスポンスの型定義
 type ApiResponse<T> = {
   success: boolean;
   payload?: T;
@@ -34,57 +31,47 @@ export default function LoginHistoryPage() {
         setLoading(false);
       }
     };
-
     fetchHistory();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="p-4 md:p-8">
-        <h1 className="text-2xl font-bold mb-4">ログイン履歴</h1>
-        <p>読み込み中...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 md:p-8">
-        <h1 className="text-2xl font-bold mb-4">ログイン履歴</h1>
-        <p className="text-red-500">エラー: {error}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 md:p-8">
-      <h1 className="text-2xl font-bold mb-6">ログイン履歴</h1>
-      {histories.length === 0 ? (
-        <p>ログイン履歴はありません。</p>
-      ) : (
-        <div className="overflow-x-auto shadow-md rounded-lg">
-          <table className="min-w-full bg-white border border-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="py-3 px-4 border-b text-left text-sm font-semibold text-gray-600">ログイン日時</th>
-                <th className="py-3 px-4 border-b text-left text-sm font-semibold text-gray-600">IPアドレス</th>
-                <th className="py-3 px-4 border-b text-left text-sm font-semibold text-gray-600">デバイス情報</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {histories.map((history) => (
-                <tr key={history.id} className="hover:bg-gray-50">
-                  <td className="py-3 px-4 whitespace-nowrap">
-                    {new Date(history.loginAt).toLocaleString('ja-JP')}
-                  </td>
-                  <td className="py-3 px-4 font-mono text-sm">{history.ipAddress}</td>
-                  <td className="py-3 px-4 text-xs text-gray-500">{history.userAgent}</td>
+    <div className="w-full max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="p-8 bg-card text-card-foreground rounded-lg shadow-md border border-border">
+        <h1 className="text-2xl font-bold mb-6">ログイン履歴</h1>
+        {loading ? (
+          <p>読み込み中...</p>
+        ) : error ? (
+          <p className="text-destructive">エラー: {error}</p>
+        ) : histories.length === 0 ? (
+          <p>ログイン履歴はありません。</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-foreground/5">
+                <tr>
+                  <th className="py-3 px-4 border-b border-border text-left text-sm font-semibold">ログイン日時</th>
+                  <th className="py-3 px-4 border-b border-border text-left text-sm font-semibold">IPアドレス</th>
+                  <th className="py-3 px-4 border-b border-border text-left text-sm font-semibold">デバイス情報</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              </thead>
+              <tbody className="divide-y divide-border">
+                {histories.map((history) => (
+                  <tr key={history.id} className="hover:bg-foreground/5">
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      {new Date(history.loginAt).toLocaleString('ja-JP', {
+                        year: 'numeric', month: '2-digit', day: '2-digit',
+                        hour: '2-digit', minute: '2-digit', second: '2-digit'
+                      })}
+                    </td>
+                    <td className="py-3 px-4 font-mono text-sm">{history.ipAddress}</td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground">{history.userAgent}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

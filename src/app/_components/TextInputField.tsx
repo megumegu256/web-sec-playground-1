@@ -5,7 +5,6 @@ import React, { forwardRef } from 'react';
 interface TextInputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
-  // 親コンポーネントから表示状態を受け取るためのプロパティを追加
   isPasswordVisible?: boolean;
 }
 
@@ -16,24 +15,27 @@ export const TextInputField = forwardRef<HTMLInputElement, TextInputFieldProps>(
 
     return (
       <div>
-        <label htmlFor={id} className="block mb-2 text-sm font-bold text-gray-700">
+        {/* ▼▼▼ ラベルの文字色を修正 ▼▼▼ */}
+        <label htmlFor={id} className="block mb-2 text-sm font-bold text-card-foreground">
           {label}
         </label>
         <div className="relative">
           <input
             {...props}
-            // 親から渡されたisPasswordVisibleに応じてtypeを変更
             type={isPasswordField && isPasswordVisible ? 'text' : props.type}
             ref={ref}
             id={id}
             className={`
-              w-full px-3 py-2 text-sm leading-tight text-gray-700 border rounded shadow appearance-none
-              focus:outline-none focus:shadow-outline
-              ${error ? 'border-red-500' : ''}
+              w-full px-3 py-2 text-sm leading-tight rounded shadow appearance-none
+              bg-background text-foreground
+              border border-input
+              focus:outline-none focus:ring-2 focus:ring-ring
+              ${error ? 'border-destructive' : ''}
             `}
           />
         </div>
-        {error && <p className="mt-1 text-xs italic text-red-500">{error}</p>}
+        {/* ▼▼▼ エラーメッセージの色を修正 ▼▼▼ */}
+        {error && <p className="mt-1 text-xs italic text-destructive">{error}</p>}
       </div>
     );
   }

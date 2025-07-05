@@ -1,15 +1,12 @@
-import type { Metadata } from 'next';
+'use client';
+
 import { Inter } from 'next/font/google';
 import './globals.css';
 import AuthProvider from '@/app/_contexts/AuthContext';
-import Header from '@/app/_components/Header'; // この行のコメントを解除
+import Header from '@/app/_components/Header';
+import { useAuth } from './_contexts/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] });
-
-export const metadata: Metadata = {
-  title: 'Web Security Playground',
-  description: 'A playground for web security learning.',
-};
 
 export default function RootLayout({
   children,
@@ -17,12 +14,26 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja">
-      <body className={`${inter.className} bg-gray-100`}>
-        <AuthProvider>
-          <Header /> {/* この行のコメントを解除 */}
-          <main className="container mx-auto p-4">{children}</main>
-        </AuthProvider>
+    <AuthProvider>
+      <AppBody>{children}</AppBody>
+    </AuthProvider>
+  );
+}
+
+function AppBody({ children }: { children: React.ReactNode }) {
+  const { theme } = useAuth();
+
+  return (
+    // ▼▼▼<html>タグにクラスを適用▼▼▼
+    <html lang="ja" className={theme}>
+      <head>
+        <title>Playground</title>
+        <meta name="description" content="A playground for web security learning." />
+      </head>
+      {/* ▼▼▼<body>のクラスをテーマ対応に修正▼▼▼ */}
+      <body className={`${inter.className} bg-background text-foreground`}>
+        <Header />
+        <main className="container mx-auto p-4">{children}</main>
       </body>
     </html>
   );

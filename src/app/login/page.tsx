@@ -27,7 +27,6 @@ export default function LoginPage() {
     resolver: zodResolver(loginRequestSchema),
   });
 
-  // ▼▼▼ ここに処理を追記して修正 ▼▼▼
   const onSubmit = async (data: LoginRequest) => {
     setIsSubmitting(true);
     setServerError('');
@@ -38,7 +37,6 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-
       const result = await response.json();
 
       if (!response.ok || !result.success) {
@@ -56,8 +54,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+    <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md p-8 space-y-6 bg-card text-card-foreground rounded-lg shadow-md border border-border">
         <h1 className="text-2xl font-bold text-center">ログイン</h1>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <TextInputField
@@ -79,9 +77,9 @@ export default function LoginPage() {
               type="checkbox"
               checked={showPasswords}
               onChange={(e) => setShowPasswords(e.target.checked)}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+              className="w-4 h-4 rounded border-input bg-card text-primary focus:ring-ring"
             />
-            <label htmlFor="show-passwords" className="ml-2 text-sm font-medium text-gray-900">
+            <label htmlFor="show-passwords" className="ml-2 block text-sm">
               パスワードを表示する
             </label>
           </div>
@@ -93,7 +91,7 @@ export default function LoginPage() {
           </div>
         </form>
         <div className="text-sm text-center">
-          <Link href="/signup" className="font-medium text-blue-600 hover:underline">
+          <Link href="/signup" className="font-medium text-primary hover:underline">
             アカウントをお持ちでないですか？ 新規登録
           </Link>
         </div>
