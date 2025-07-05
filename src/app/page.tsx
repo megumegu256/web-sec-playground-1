@@ -48,7 +48,7 @@ export default function HomePage() {
         // --- 未ログインの場合 ---
         <div>
           <h1 className="text-3xl font-bold mb-4">
-            Web Security Playground へようこそ！
+            Playground へようこそ！
           </h1>
           <p className="text-gray-600 mb-6">
             ログインまたは新規登録をして、すべての機能をお試しください。
