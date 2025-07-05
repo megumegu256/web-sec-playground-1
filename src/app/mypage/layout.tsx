@@ -3,19 +3,18 @@
 import React from 'react';
 import { useAuth } from '@/app/_contexts/AuthContext';
 import Link from 'next/link';
+// ▼▼▼ next/navigation から usePathname をインポート ▼▼▼
+import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTriangleExclamation, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
-/**
- * マイページ関連のルート (/mypage/*) に適用されるレイアウト
- * 認証状態をチェックし、未ログインの場合はアクセスを制限する
- */
 export default function MypageLayout({ children }: { children: React.ReactNode }) {
-  // AuthContextからユーザー情報と読み込み状態を取得
   const { user, isLoading } = useAuth();
+  // ▼▼▼ 現在のページのパスを取得 ▼▼▼
+  const pathname = usePathname();
 
-  // 認証状態を確認中の表示
   if (isLoading) {
+    // (変更なし)
     return (
       <main className="p-8 text-center">
         <FontAwesomeIcon icon={faSpinner} spin size="2x" className="text-gray-500" />
@@ -24,7 +23,6 @@ export default function MypageLayout({ children }: { children: React.ReactNode }
     );
   }
 
-  // 未ログインの場合の表示
   if (!user) {
     return (
       <main className="p-8 text-center">
@@ -34,7 +32,11 @@ export default function MypageLayout({ children }: { children: React.ReactNode }
         </h1>
         <div className="mt-4">
           このコンテンツを利用するためには
-          <Link href="/login" className="px-1 text-blue-500 hover:underline">
+          {/* ▼▼▼ hrefを修正し、リダイレクト先のURLを追加 ▼▼▼ */}
+          <Link
+            href={`/login?redirect=${pathname}`}
+            className="px-1 text-blue-500 hover:underline"
+          >
             ログイン
           </Link>
           してください。
@@ -43,6 +45,5 @@ export default function MypageLayout({ children }: { children: React.ReactNode }
     );
   }
 
-  // ログイン済みの場合は、ページの中身 (children) を表示
   return <>{children}</>;
 }

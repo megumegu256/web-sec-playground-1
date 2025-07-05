@@ -6,10 +6,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 export default function HomePage() {
-  // 認証情報を取得
   const { user, isLoading } = useAuth();
 
-  // 読み込み中の表示
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-32">
@@ -36,6 +34,14 @@ export default function HomePage() {
             >
               パスワードを変更する
             </Link>
+            {/* ▼▼▼ ここから追加 ▼▼▼ */}
+            <Link 
+              href="/mypage/history" 
+              className="px-6 py-2 font-semibold text-white bg-gray-500 rounded-md hover:bg-gray-600 transition-colors"
+            >
+              ログイン履歴を見る
+            </Link>
+            {/* ▲▲▲ ここまで追加 ▲▲▲ */}
           </div>
         </div>
       ) : (

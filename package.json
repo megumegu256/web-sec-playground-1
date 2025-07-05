@@ -3,12 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "npx prisma generate && next dev",
+    "build": "npx prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
-    "prisma:migrate": "npx cross-env DATABASE_URL=\"file:./app.db\" npx prisma migrate dev",
-    "prisma:studio": "npx cross-env DATABASE_URL=\"file:./app.db\" npx prisma studio"
+    "lint": "next lint"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.5.2",
@@ -30,6 +28,7 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.19",
     "cross-env": "^7.0.3",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
