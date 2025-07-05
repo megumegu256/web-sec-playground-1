@@ -9,10 +9,6 @@ import { signJwt } from '@/app/api/_helper/jwt';
 const MAX_LOGIN_ATTEMPTS = 5; // 5回失敗でロック
 const LOCKOUT_PERIOD_MINUTES = 15; // 15分間ロック
 
-/**
- * POST /api/login
- * ユーザーログインを処理するAPIエンドポイント
- */
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -22,11 +18,10 @@ export async function POST(request: Request) {
       where: { email: validatedData.email },
     });
 
-    // ユーザーが存在しない場合、ユーザー特定のヒントを与えないよう一般的なエラーを返す
     if (!user) {
       return NextResponse.json(
         { success: false, message: 'メールアドレスまたはパスワードが正しくありません。' },
-        { status: 401 } // 401 Unauthorized
+        { status: 401 }
       );
     }
 
@@ -36,10 +31,9 @@ export async function POST(request: Request) {
       if (new Date() < lockoutTime) {
         return NextResponse.json(
           { success: false, message: `アカウントはロックされています。しばらくしてから再度お試しください。` },
-          { status: 403 } // 403 Forbidden
+          { status: 403 }
         );
       } else {
-        // ロック時間が経過していれば解除
         await prisma.user.update({
           where: { id: user.id },
           data: { isLocked: false, failedLoginAttempts: 0, lastFailedLoginAt: null },
@@ -61,7 +55,7 @@ export async function POST(request: Request) {
       const token = await signJwt({ sub: user.id, email: user.email });
       const response = NextResponse.json({ success: true, message: 'ログインに成功しました。' });
 
-      // CookieにJWTをセット (HttpOnlyでJSからのアクセスを防ぐ)
+      // CookieにJWTをセット
       response.cookies.set('auth-token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -69,8 +63,8 @@ export async function POST(request: Request) {
         path: '/',
         maxAge: 60 * 60 * 24, // 24時間
       });
-
       return response;
+
     } else {
       // 失敗：失敗カウントをインクリメント
       const newAttempts = user.failedLoginAttempts + 1;
@@ -86,7 +80,6 @@ export async function POST(request: Request) {
           lastFailedLoginAt: new Date(),
         },
       });
-
       return NextResponse.json(
         { success: false, message: 'メールアドレスまたはパスワードが正しくありません。' },
         { status: 401 }
