@@ -1,0 +1,28 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// 暗号化やハッシュ化などの高度なセキュリティ機能を提供するPrismaの拡張機能を有効にします。
+generator client {
+  provider = "prisma-client-js"
+}
+
+// データベース接続情報を定義します。今回はSQLiteを使用します。
+datasource db {
+  provider = "sqlite"
+  url      = "file:./app.db"
+}
+
+// ユーザー情報を格納するモデル（テーブル）
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // --- アカウントロック機能用のフィールド ---
+  isLocked            Boolean  @default(false) // アカウントがロックされているか
+  failedLoginAttempts Int      @default(0)     // 連続ログイン失敗回数
+  lastFailedLoginAt   DateTime?                // 最後にログイン失敗した日時
+}
